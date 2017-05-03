@@ -19,6 +19,9 @@ const char MD5::HEX_NUMBERS[16] = {
   'c', 'd', 'e', 'f'
 };
 
+//for rotate
+int rever[16]={7,12,17,22,5,9,14,20,4,11,16,23,6,10,15,21};
+
 /**
  * @Construct a MD5 object with a string.
  *
@@ -37,7 +40,19 @@ MD5::MD5(const string& message) {
 
   /* Initialization the object according to message. */
   init((const byte*)message.c_str(), message.length());
+	
+  initConstants();
 }
+
+void MD5::initConstants()
+{
+	for(int i=0;i<64;i++)
+	{
+		constants[i]=floor(std::abs(sin(i+1))*pow(2,32));
+	}
+}
+
+
 
 /**
  * @Generate md5 digest.
@@ -109,10 +124,12 @@ void MD5::init(const byte* input, size_t len) {
   if (len >= partLen) {
 
     memcpy(&buffer[index], input, partLen);
-    transform(buffer);
+    //transform(buffer);
+    transform_reimplement(buffer);
 
     for (i = partLen; i + 63 < len; i += 64) {
-      transform(&input[i]);
+     	//transform(&input[i]);
+	transform_reimplement(&input[i]);
     }
     index = 0;
 
@@ -123,6 +140,61 @@ void MD5::init(const byte* input, size_t len) {
   /* Buffer remaining input */
   memcpy(&buffer[index], &input[i], len - i);
 }
+
+/*
+it reference wiki pesudo code
+*/
+
+void MD5::transform_reimplement(const byte block[64])
+{
+	
+	bit32 a = state[0],b=state[1],c=state[2],d=state[3],x[16];
+	
+	decode(block,x,64);
+	
+	int xidx=0,ii=0;
+	
+	for(int i=0;i<64;i++)
+	{
+		
+	        bit32 f=0,tmp=0;
+		if(i<16)
+		{
+			f = F(b,c,d);
+			xidx = i;
+			ii=i%4;
+		}else if(i<32)
+		{
+			f = G(b,c,d);
+			xidx =(5*i+1)%16;
+			ii=i%4+4;
+		}else if(i<48)
+		{
+			f = H(b,c,d);
+			xidx =(3*i+5)%16;
+			ii=i%4+8;
+		}else
+		{
+			f = I(b,c,d);
+			xidx =(7*i)%16;
+			ii=i%4+12;
+		}
+		tmp=d;
+		d=c;
+		c=b;
+		b+=ROTATELEFT((a+f+constants[i]+x[xidx]),rever[ii]);
+		a=tmp;
+		
+	}
+
+	state[0]+=a;
+	state[1]+=b;	
+	state[2]+=c;
+	state[3]+=d;
+	
+
+}
+
 
 /**
  * @MD5 basic transformation. Transforms state based on block.

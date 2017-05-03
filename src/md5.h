@@ -11,7 +11,7 @@
 #ifndef MD5_H
 #define MD5_H
 
-/* Parameters of MD5. */
+/* Parameters of MD5 for the left rotate. */
 #define s11 7
 #define s12 12
 #define s13 17
@@ -28,6 +28,9 @@
 #define s42 10
 #define s43 15
 #define s44 21
+
+
+
 
 /**
  * @Basic MD5 functions.
@@ -77,6 +80,7 @@
 }
 
 #include <string>
+#include <cmath>
 #include <cstring>
 
 using std::string;
@@ -102,6 +106,8 @@ private:
    * and updating the context.*/
   void init(const byte* input, size_t len);
 
+  void transform_reimplement(const byte block[64]);
+
   /* MD5 basic transformation. Transforms state based on block. */
   void transform(const byte block[64]);
 
@@ -110,6 +116,8 @@ private:
 
   /* Decodes input (byte) into output (usigned long). */
   void decode(const byte* input, bit32* output, size_t length);
+
+  void initConstants();
 
 private:
   /* Flag for mark whether calculate finished. */
@@ -120,6 +128,9 @@ private:
 
   /* number of bits, low-order word first. */
   bit32 count[2];
+
+  /*it replaces the contants, the beginner dont know those contants how to generate*/
+  bit32 constants[64];
 
   /* input buffer. */
   byte buffer[64];
